@@ -22,7 +22,7 @@ LEDs WS2812B
 
 
 #define DATA_PIN     5
-#define DAYLIGHT_SAVING 6
+#define DAYLIGHT_SAVING 7
 #define NUM_LEDS    100
 #define CHIPSET     SK6812
 
@@ -66,7 +66,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(RTCIN,HIGH);
   FastLED.addLeds<SK6812, DATA_PIN, RGB>(leds, NUM_LEDS);  // GRB ordering is typical
- // pinMode(DAYLIGHT_SAVING, INPUT);
+ pinMode(DAYLIGHT_SAVING, INPUT);
 
   // beginn der seriellen Kommunikation mit 9600baud
   //Serial.begin(9600);
@@ -83,7 +83,7 @@ void setup() {
   // sprintf(timestamp,"Es ist %02d:%02d:%02d",hh,mm,ss);
   // Serial.println(timestamp);
   RTC_Start();
-  secLookup = ss-1;
+  secLookup = ss-2;
 }
 
 
@@ -107,8 +107,13 @@ void loop() {
     if(mm5er!=lmm5er||update==true){                      // Wenn die Miunten nicht gleich der Minuten letzten durchlauf sind oder der update Merker gesetzt  
       FastLED.clear();
       TimeRead();                                   // RTC auslesen
-     // if (digitalRead(DAYLIGHT_SAVING))
-        //hh++;
+      secLookup = ss-2;
+     if (digitalRead(DAYLIGHT_SAVING)){
+      hh++;
+      if (hh == 24){
+        hh = 0;
+      }
+     }
       update=false; 
       mm5er=mm-mm%5;                           // den 5er Teiler berechen 0,5,10,15,20....55 etc.
       ss = ss + 60*(mm%5);
