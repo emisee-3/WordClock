@@ -52,8 +52,8 @@ boolean dl_sv=false;
 //byte timeout=0;
 ////byte lm=0;                                  // 0=Normal 1=Display Seconds 2=Set minutes 3=Set hours
 ////byte lCase=0;
-byte mm,hh,hhdisplay,mmset,mm5er,lmm5er, secLookup=0;                // Save Variables for time
-short int ss;
+byte mm,hh,hhdisplay,mmset,mm5er,lmm5er=0;                // Save Variables for time
+short int ss, secLookup= 0;
 //byte R=0,G=0,B=0;                            // Farbe für den Start alles weis
 //byte Rpointer,Gpointer,Bpointer;
 //byte PWMArray[23]={
@@ -83,7 +83,11 @@ void setup() {
   // sprintf(timestamp,"Es ist %02d:%02d:%02d",hh,mm,ss);
   // Serial.println(timestamp);
   RTC_Start();
-  secLookup = ss-2;
+  if (ss>=2){
+    secLookup = ss-2;
+  }else{
+    secLookup = 60 -(2-ss);
+  }
 }
 
 
@@ -107,7 +111,11 @@ void loop() {
     if(mm5er!=lmm5er||update==true){                      // Wenn die Miunten nicht gleich der Minuten letzten durchlauf sind oder der update Merker gesetzt  
       FastLED.clear();
       TimeRead();                                   // RTC auslesen
-      secLookup = ss-2;
+       if (ss>=2){
+    secLookup = ss-2;
+  }else{
+    secLookup = 60 -(2-ss);
+  }
      if (digitalRead(DAYLIGHT_SAVING)){
       hh++;
       if (hh == 24){

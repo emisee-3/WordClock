@@ -50,8 +50,10 @@ boolean dl_sv=false;
 //byte timeout=0;
 ////byte lm=0;                                  // 0=Normal 1=Display Seconds 2=Set minutes 3=Set hours
 ////byte lCase=0;
-byte mm,hh,hhdisplay,mmset,mm5er,lmm5er,secLookup=0;                // Save Variables for time
-short int ss;
+byte mm,hh,hhdisplay,mmset,mm5er,lmm5er=0;                // Save Variables for time
+short int ss, secLookup = 0;
+byte secDelay = 2;
+short int lookupPeriode = 300;
 //byte R=0,G=0,B=0;                            // Farbe für den Start alles weis
 //byte Rpointer,Gpointer,Bpointer;
 //byte PWMArray[23]={
@@ -78,32 +80,39 @@ void setup() {
 //    if (digitalRead(DAYLIGHT_SAVING))
 //    hh++;
   RTC_Start();
-  secLookup = ss-2;
-}
+  ss = ss + 60*(mm%5);
+  if (ss>=secDelay){
+    secLookup = (ss-secDelay)%lookupPeriode;
+  }else{
+    secLookup = lookupPeriode -(secDelay-ss);
+  }
+  }
 
 
 // Start Main Loop
 void loop() {
   wdt_reset();                      // Watchdog timer falls sich der Controller mal aufhängt
-  sec=digitalRead(RTCIN);                          // Read the RTC SQWPulse 
+  sec=digitalRead(RTCIN);           // Read the RTC SQWPulse 
   digitalWrite(LED_BUILTIN,sec);
   if (sec==true && lsec==false){
     ++secLookup;                                          // Sekunden Zähler aufadieren 
-    //char timestamp[15];
-    //sprintf(timestamp,"Es ist %02d:%02d:%02d",hh,mm5er,ss);
-  //Serial.println(timestamp);
-  if (secLookup==300){                                   // Bei 60 Sekunden eine Minute weiter
-      secLookup
-      =0;
-      mm5er=mm5er+5;
+  //   char timestamp[15];
+  //   sprintf(timestamp,"Es ist %02d:%02d:%02d",hh,mm5er,ss);
+  // Serial.println(timestamp);
+  if (secLookup==lookupPeriode){                                   // Bei 60 Sekunden eine Minute weiter
+      secLookup=0;
+      mm5er=mm5er+lookupPeriode/60;
     }
     lsec=true;  
   }
 
     if(mm5er!=lmm5er||update==true){                      // Wenn die Miunten nicht gleich der Minuten letzten durchlauf sind oder der update Merker gesetzt  
       FastLED.clear();
-      TimeRead();            // RTC auslesen
-      if (digitalRead(DAYLIGHT_SAVING)){
+      TimeRead();                                   // RTC auslesen
+  //     char timestamp[15];
+  //   sprintf(timestamp,"Es ist jetzt %02d:%02d:%02d",hh,mm,ss);
+  // Serial.println(timestamp);
+     if (digitalRead(DAYLIGHT_SAVING)){
       hh++;
       if (hh == 24){
         hh = 0;
@@ -112,10 +121,14 @@ void loop() {
       update=false; 
       mm5er=mm-mm%5;                           // den 5er Teiler berechen 0,5,10,15,20....55 etc.
       ss = ss + 60*(mm%5);
-      //char timestamp[15];
-    //sprintf(timestamp,"Es ist jetzt %02d:%02d:%02d",hh,mm5er,ss);
-  //Serial.println(timestamp);
-      hhdisplay=hh-12*(hh/12);            
+      if (ss>=secDelay){
+        secLookup = (ss-secDelay)%lookupPeriode;
+      }else{
+        secLookup = lookupPeriode -(secDelay-ss);
+      }
+  //   sprintf(timestamp,"Es ist jetzt %02d:%02d:%02d",hh,mm5er,ss);
+  // Serial.println(timestamp);
+      //hhdisplay=hh-12*(hh/12);            
       /*  Zeitanzeigeausgabe in Worten */ 
       if (mm5er==0||mm5er==30){
         W_ESIST();
@@ -175,3 +188,4 @@ void loop() {
 }
 }
 // End Main Loop
+
