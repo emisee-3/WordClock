@@ -53,7 +53,7 @@ boolean dl_sv=false;
 byte mm,hh,hhdisplay,mmset,mm5er,lmm5er=0;                // Save Variables for time
 short int ss, secLookup = 0;
 byte secDelay = 2;
-short int lookupPeriode = 60;
+short int lookupPeriode = 1 * 60;
 bool debugging = 0;
 //byte R=0,G=0,B=0;                            // Farbe für den Start alles weis
 //byte Rpointer,Gpointer,Bpointer;
