@@ -53,7 +53,10 @@ boolean dl_sv=false;
 ////byte lm=0;                                  // 0=Normal 1=Display Seconds 2=Set minutes 3=Set hours
 ////byte lCase=0;
 byte mm,hh,hhdisplay,mmset,mm5er,lmm5er=0;                // Save Variables for time
-short int ss, secLookup= 0;
+short int ss, secLookup = 0;
+byte secDelay = 2;
+short int lookupPeriode = 60;
+bool debugging = 0;
 //byte R=0,G=0,B=0;                            // Farbe für den Start alles weis
 //byte Rpointer,Gpointer,Bpointer;
 //byte PWMArray[23]={
@@ -66,10 +69,12 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(RTCIN,HIGH);
   FastLED.addLeds<SK6812, DATA_PIN, RGB>(leds, NUM_LEDS);  // GRB ordering is typical
- pinMode(DAYLIGHT_SAVING, INPUT);
+   pinMode(DAYLIGHT_SAVING, INPUT);
 
-  // beginn der seriellen Kommunikation mit 9600baud
-  //Serial.begin(9600);
+  //beginn der seriellen Kommunikation mit 9600baud
+  if (debugging){
+    Serial.begin(9600);
+  }
   Wire.begin();                                  // Start I2C Kommunikation
   Wire.beginTransmission(RTC_ADDRESS);           // Beginn Kommunikation auf  Adresse 0x68 
   Wire.write(0x0E);                               // Pointer auf Control Register 0x07   
@@ -77,18 +82,14 @@ void setup() {
   Wire.endTransmission();                        // Beenden der I2C Kommunitkation
   update=true;
   TimeRead();
-  //if (digitalRead(DAYLIGHT_SAVING))
-  //  hh++;
-  // char timestamp[15];
-  // sprintf(timestamp,"Es ist %02d:%02d:%02d",hh,mm,ss);
-  // Serial.println(timestamp);
   RTC_Start();
-  if (ss>=2){
-    secLookup = ss-2;
+  ss = ss + 60*(mm%5);
+  if (ss>=secDelay){
+    secLookup = (ss-secDelay)%lookupPeriode;
   }else{
-    secLookup = 60 -(2-ss);
+    secLookup = lookupPeriode -(secDelay-ss);
   }
-}
+  }
 
 
 // Start Main Loop
@@ -97,13 +98,21 @@ void loop() {
   sec=digitalRead(RTCIN);           // Read the RTC SQWPulse 
   digitalWrite(LED_BUILTIN,sec);
   if (sec==true && lsec==false){
-    ++secLookup;                                          // Sekunden Zähler aufadieren 
-  //   char timestamp[15];
-  //   sprintf(timestamp,"Es ist %02d:%02d:%02d",hh,mm5er,ss);
-  // Serial.println(timestamp);
-  if (secLookup==60){                                   // Bei 60 Sekunden eine Minute weiter
+    ++secLookup;                                          // Sekunden Zähler aufadieren
+    if (debugging){
+      char timestamp[15];
+      sprintf(timestamp,"Es ist %02d:%02d:%02d",hh,mm5er,ss);
+      Serial.println(timestamp);
+      Serial.println(secLookup);
+    } 
+  if (secLookup==lookupPeriode){                                   // Bei 60 Sekunden eine Minute weiter
       secLookup=0;
-      mm5er=mm5er+1;
+      mm5er=mm5er+lookupPeriode/60;
+      if(debugging){
+        Serial.println(mm5er);
+        Serial.println(lmm5er);
+      }
+      
     }
     lsec=true;  
   }
@@ -111,11 +120,11 @@ void loop() {
     if(mm5er!=lmm5er||update==true){                      // Wenn die Miunten nicht gleich der Minuten letzten durchlauf sind oder der update Merker gesetzt  
       FastLED.clear();
       TimeRead();                                   // RTC auslesen
-       if (ss>=2){
-    secLookup = ss-2;
-  }else{
-    secLookup = 60 -(2-ss);
-  }
+      if (debugging){
+        char timestamp[15];
+        sprintf(timestamp,"Es ist jetzt %02d:%02d:%02d",hh,mm,ss);
+        Serial.println(timestamp);
+      }
      if (digitalRead(DAYLIGHT_SAVING)){
       hh++;
       if (hh == 24){
@@ -125,9 +134,16 @@ void loop() {
       update=false; 
       mm5er=mm-mm%5;                           // den 5er Teiler berechen 0,5,10,15,20....55 etc.
       ss = ss + 60*(mm%5);
-  //     char timestamp[15];
-  //   sprintf(timestamp,"Es ist jetzt %02d:%02d:%02d",hh,mm5er,ss);
-  // Serial.println(timestamp);
+      if (ss>=secDelay){
+        secLookup = (ss-secDelay)%lookupPeriode;
+      }else{
+        secLookup = lookupPeriode -(secDelay-ss);
+      }
+      if (debugging){
+        char timestamp[15];
+        sprintf(timestamp,"Es ist jetzt %02d:%02d:%02d",hh,mm5er,ss);
+        Serial.println(timestamp);
+      }
       //hhdisplay=hh-12*(hh/12);            
       /*  Zeitanzeigeausgabe in Worten */ 
       if (mm5er==0||mm5er==30){
@@ -188,3 +204,4 @@ void loop() {
 }
 }
 // End Main Loop
+
