@@ -26,39 +26,19 @@ LEDs WS2812B
 CRGB leds[NUM_LEDS];
 
 
-//unsigned long ptime;
-//unsigned long start;
-//boolean druck=false;
-//boolean ldruck=true;
-//boolean M_minus=false;
-//boolean FM_minus=true;
-//boolean M_plus=false;
-//boolean FM_plus=true;
-//boolean M_sek=false;
-//boolean FM_sek=true;
-////boolean tasterlesen=true;
+// Variables to adjust
+byte secDelay = 2;
+short int lookupPeriode = 1 * 60;                         //always multiple of 60
+bool debugging = 0;                                       // needs to be set to 0 when run without connection to computer
+
 boolean update,last=true;
 boolean sec=false;
 boolean lsec=false;
 boolean dl_sv=false;
-//boolean save,one=false;
-//boolean Minus,Plus=false;
-//boolean once=false;
-//boolean done=false;
-//boolean M_timeout=false;
-//byte setmode=0;
-//byte timeout=0;
-////byte lm=0;                                  // 0=Normal 1=Display Seconds 2=Set minutes 3=Set hours
-////byte lCase=0;
 byte mm,hh,hhdisplay,mmset,mm5er,lmm5er=0;                // Save Variables for time
 short int ss, secLookup = 0;
-byte secDelay = 2;
-short int lookupPeriode = 1 * 60;
-bool debugging = 0;
-//byte R=0,G=0,B=0;                            // Farbe für den Start alles weis
-//byte Rpointer,Gpointer,Bpointer;
-//byte PWMArray[23]={
-//  2,7,10,15,20,25,30,35,40,50,60,70,80,90,100,120,140,160,180,200,220,240,255};
+
+
 
 
 void setup() {
@@ -103,7 +83,7 @@ void loop() {
       Serial.println(timestamp);
       Serial.println(secLookup);
     } 
-  if (secLookup==lookupPeriode){                                   // Bei 60 Sekunden eine Minute weiter
+  if (secLookup==lookupPeriode){                                   // Advance mm5er after lookupPeriode
       secLookup=0;
       mm5er=mm5er+lookupPeriode/60;
       if(debugging){
@@ -123,7 +103,7 @@ void loop() {
         sprintf(timestamp,"Es ist jetzt %02d:%02d:%02d",hh,mm,ss);
         Serial.println(timestamp);
       }
-     if (digitalRead(DAYLIGHT_SAVING)){
+     if (digitalRead(DAYLIGHT_SAVING)){              // add one hour, 23 becomes 0
       hh++;
       if (hh == 24){
         hh = 0;
@@ -202,4 +182,3 @@ void loop() {
 }
 }
 // End Main Loop
-
